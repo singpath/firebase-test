@@ -18,7 +18,6 @@ npm install firebase firebase-token-generator firebase-test --save-dev
 ## Mocha example
 
 ```js
-// const expect = require('expect.js');
 const Firebase = require('firebase');
 const fbTest = require('firebase-test');
 
