@@ -1,0 +1,42 @@
+{
+  "name": "firebase-test",
+  "version": "0.1.0",
+  "description": "Firebase rules test helper",
+  "main": "src/index.js",
+  "scripts": {
+    "cover": "istanbul cover ./node_modules/mocha/bin/_mocha tests/index.js --report lcov -- -R spec",
+    "coveralls": "npm run cover && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "lint": "eslint src/ tests/",
+    "test": "eslint src/ tests/ && mocha tests/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/singpath/firebase-test.git"
+  },
+  "keywords": [
+    "Firebase",
+    "test"
+  ],
+  "author": "Chris Boesch",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/singpath/firebase-test/issues"
+  },
+  "homepage": "https://github.com/singpath/firebase-test#readme",
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "peerDependencies": {
+    "firebase": "2.x",
+    "firebase-token-generator": "2.x"
+  },
+  "devDependencies": {
+    "coveralls": "^2.11.4",
+    "eslint": "^1.10.2",
+    "expect.js": "^0.3.1",
+    "istanbul": "^0.4.1",
+    "mocha": "^2.3.4",
+    "mocha-lcov-reporter": "^1.0.0",
+    "sinon": "^1.17.2"
+  }
+}
