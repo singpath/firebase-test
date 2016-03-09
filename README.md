@@ -37,24 +37,18 @@ describe('presence', function() {
     });
   });
 
-  afterEach(() => {
-    // The testsuite monkey patch console to filter out Firebase warning;
-    // we need to restore it at then of each test
-    suite.restore();
-  });
-
   it('should be readeable', done => {
-    suite.with({
+    suite.startWith({
       // initial state of the Firebase DB
     }).as('bob').get('/people').ok(done);
   });
 
   it('should allow people to update their presence', done=> {
-    suite.with({}).as('bob').set('/people/bob', Firebase.ServerValue.TIMESTAMP).ok(done);
+    suite.startWith({}).as('bob').set('/people/bob', Firebase.ServerValue.TIMESTAMP).ok(done);
   });
 
   it('should only allow people to update their own presence', done=> {
-    suite.with({}).as('alice').set('/people/bob', Firebase.ServerValue.TIMESTAMP).shouldFails(done);
+    suite.startWith({}).as('alice').set('/people/bob', Firebase.ServerValue.TIMESTAMP).shouldFails(done);
   });
 
 });
