@@ -5,45 +5,42 @@ const sinon = require('sinon');
 const FirebaseTokenGenerator = require('firebase-token-generator');
 const assert = sinon.assert;
 const match = sinon.match;
-const spy = sinon.spy;
 const stub = sinon.stub;
+const restFirebase = require('rest-firebase');
+const rxFirebase = require('rx-firebase');
 
-const testSuite = require('..').testSuite;
-const Context = require('../src/testsuite').Context;
-const wait = require('./utils').wait;
+const testSuite = require('../');
 
+describe('Suite', function() {
 
-describe('TestSuite', () => {
-  let warn;
-
-  beforeEach(() => {
-    /*eslint no-console: 0*/
-    warn = console.warn;
+  beforeEach(function() {
+    sinon.stub(restFirebase, 'factory');
+    sinon.stub(rxFirebase, 'factory');
   });
 
-  afterEach(() => {
-    /*eslint no-console: 0*/
-    console.warn = warn;
+  afterEach(function() {
+    restFirebase.factory.restore();
+    rxFirebase.factory.restore();
   });
 
-  it('should throw if the firebase id is missing', () => {
+  it('should throw if the firebase id is missing', function() {
     expect(() => {
-      testSuite({
+      testSuite.factory({
         firebaseSecret: 'xxx'
       });
     }).to.throwError();
   });
 
-  it('should throw if the firebase secret is missing', () => {
+  it('should throw if the firebase secret is missing', function() {
     expect(() => {
-      testSuite({
+      testSuite.factory({
         firebaseId: 'some-id'
       });
     }).to.throwError();
   });
 
-  it('should instantiate a token generator', () => {
-    const suite = testSuite({
+  it('should instantiate a token generator', function() {
+    const suite = testSuite.factory({
       firebaseId: 'some-id',
       firebaseSecret: 'xxx'
     });
@@ -52,80 +49,102 @@ describe('TestSuite', () => {
     expect(suite.generator.mSecret).to.be('xxx');
   });
 
-  it('should patch console.warn', () => {
-    testSuite({
-      firebaseId: 'some-id',
+  it('should set rxFirebase', function() {
+    const id = 'some-id';
+    const factory = {};
+
+    rxFirebase.factory.withArgs(id).returns(factory);
+
+    const suite = testSuite.factory({
+      firebaseId: id,
       firebaseSecret: 'xxx'
     });
 
-    expect(console.warn).not.to.be(warn);
+    expect(suite.rxFirebase).to.be(factory);
   });
 
-  describe('warn', () => {
-    let fakeWarn;
+  it('should set restFirebase', function() {
+    const id = 'some-id';
+    const factory = {};
 
-    beforeEach(() => {
-      fakeWarn = console.warn = spy();
+    restFirebase.factory.withArgs(id).returns(factory);
 
-      testSuite({
-        firebaseId: 'some-id',
-        firebaseSecret: 'xxx'
-      });
+    const suite = testSuite.factory({
+      firebaseId: id,
+      firebaseSecret: 'xxx'
     });
 
-    it('should filter Firebase warning', () => {
-      console.warn('FIREBASE WARNING: you should filter me');
-      assert.notCalled(fakeWarn);
-    });
-
-    it('should not filter other warning', () => {
-      console.warn('you should not filter me');
-      assert.calledOnce(fakeWarn);
-    });
+    expect(suite.restFirebase).to.be(factory);
   });
 
-  describe('restore', function() {
-
-    it('should restore the correct warn function', () => {
-      const fakeWarn = console.warn = () => undefined;
-      const suite = testSuite({
-        firebaseId: 'some-id',
-        firebaseSecret: 'xxx'
-      });
-
-      suite.restore();
-      expect(console.warn).to.be(fakeWarn);
-    });
-
-  });
-
-  describe('refPath', () => {
-
-    it('should build the path to firebase element from a string', () => {
-      const suite = testSuite({
-        firebaseId: 'some-id',
-        firebaseSecret: 'xxx'
-      });
-
-      expect(suite.refPath('foo/bar')).to.be('https://some-id.firebaseio.com/foo/bar');
-    });
-
-    it('should build the path to firebase element from an array', () => {
-      const suite = testSuite({
-        firebaseId: 'some-id',
-        firebaseSecret: 'xxx'
-      });
-
-      expect(suite.refPath(['foo', 'bar'])).to.be('https://some-id.firebaseio.com/foo/bar');
-    });
-
-  });
-
-  describe('token', () => {
+  describe('req', function() {
     let suite;
 
-    beforeEach(() => {
-      suite = testSuite({
+    beforeEach(function() {
+      suite = testSuite.factory({
+        firebaseId: 'some-id',
+        firebaseSecret: 'xxx'
+      });
+
+      suite.restFirebase = sinon.stub();
+    });
+
+    it('should return a rest firebase reference', function() {
+      const opts = {};
+      const ref = {};
+
+      suite.restFirebase.withArgs(opts).returns(ref);
+      expect(suite.req(opts)).to.be(ref);
+    });
+
+    it('should reference the db root by default', function() {
+      const ref = {};
+
+      suite.restFirebase.withArgs(
+        sinon.match(v => !v || !v.paths || v.paths === '/')
+      ).returns(ref);
+
+      expect(suite.req()).to.be(ref);
+    });
+  });
+
+  describe('ref', function() {
+    let suite;
+
+    beforeEach(function() {
+      suite = testSuite.factory({
+        firebaseId: 'some-id',
+        firebaseSecret: 'xxx'
+      });
+
+      suite.rxFirebase = sinon.stub();
+    });
+
+    it('should return a rest firebase reference', function() {
+      const opts = {paths: 'foo/bar'};
+      const ref = {};
+
+      suite.rxFirebase.withArgs(opts.paths).returns(ref);
+      expect(suite.ref(opts)).to.be(ref);
+    });
+
+    it('should reference the db root by default', function() {
+      const ref = {};
+
+      suite.rxFirebase.withArgs(
+        sinon.match(v => !v || !v.paths || v.paths === '/')
+      ).returns(ref);
+
+      expect(suite.ref()).to.be(ref);
+    });
+  });
+
+  describe('token', function() {
+    let suite, token;
+
+    beforeEach(function() {
+      token = 'some-token';
+      suite = testSuite.factory({
         firebaseId: 'some-id',
         firebaseSecret: 'xxx',
         defaultAuthData: {
@@ -133,20 +152,20 @@ describe('TestSuite', () => {
         }
       });
 
-      suite.generator = {createToken: stub().returns('some-token')};
+      suite.generator = {createToken: stub().returns(token)};
     });
 
-    it('should generate a new token for the user id', () => {
-      expect(suite.token('bob')).to.be('some-token');
+    it('should generate a new token for the user id', function() {
+      expect(suite.token('bob').token).to.be(token);
       assert.calledOnce(suite.generator.createToken);
       assert.calledWithExactly(
         suite.generator.createToken,
-        match.has('uid', 'bob'),
-        match.object
+        match({uid: 'bob'}),
+        undefined
       );
     });
 
-    it('should set default auth data', () => {
+    it('should set default auth data', function() {
       suite.token('bob');
       assert.calledWithExactly(
         suite.generator.createToken,
@@ -154,11 +173,11 @@ describe('TestSuite', () => {
           uid: 'bob',
           isModerator: false
         }),
-        match.object
+        undefined
       );
     });
 
-    it('should allow auth data to be set', () => {
+    it('should allow auth data to be set', function() {
       suite.token('bob', {'isModerator': true, displayName: 'Bob'});
       assert.calledWithExactly(
         suite.generator.createToken,
@@ -167,11 +186,11 @@ describe('TestSuite', () => {
           isModerator: true,
           displayName: 'Bob'
         }),
-        match.object
+        undefined
       );
     });
 
-    it('should not debug rules by default', () => {
+    it('should not debug rules by default', function() {
       suite.token('bob');
       assert.calledWithExactly(
         suite.generator.createToken,
@@ -180,8 +199,8 @@ describe('TestSuite', () => {
       );
     });
 
-    it('should allow to debug rules', () => {
-      suite.token('bob', undefined, true);
+    it('should allow to debug rules', function() {
+      suite.token('bob', undefined, {debug: true});
       assert.calledWithExactly(
         suite.generator.createToken,
         match.object,
@@ -191,7 +210,7 @@ describe('TestSuite', () => {
       );
     });
 
-    it('should not create an admin token', () => {
+    it('should not create an admin token', function() {
       suite.token('bob');
       assert.calledWithExactly(
         suite.generator.createToken,
@@ -202,248 +221,78 @@ describe('TestSuite', () => {
 
   });
 
-  describe('login', () => {
-    let suite, ref;
+  describe('rest', function() {
+    let suite;
 
-    beforeEach(() => {
-      suite = testSuite({
+    beforeEach(function() {
+      suite = testSuite.factory({
         firebaseId: 'some-id',
         firebaseSecret: 'xxx'
       });
-
-      ref = {authWithCustomToken: spy()};
-      suite.ref = stub().returns(ref);
-      suite.token = stub().returns('some-token');
     });
 
-    it('should request a token', () => {
-      const authData = {};
-
-      suite.login('bob', authData, true);
-      assert.calledOnce(suite.token);
-      assert.calledWithExactly(suite.token, 'bob', authData, true);
+    it('should return a RestContext', function() {
+      expect(suite.rest()).to.be.a(testSuite.RestContext);
     });
 
-    it('should return a promise', () => {
-      expect(suite.login('bob').then).to.be.ok();
+    it('should reference the test suite', function() {
+      expect(suite.rest().suite).to.be(suite);
     });
 
-    it('should query a Firebase reference for firebase db', () => {
-      suite.login('bob');
-      assert.calledOnce(suite.ref);
-      assert.calledWithExactly(suite.ref);
-    });
-
-    it('should authenticate the user with the requested token', () => {
-      suite.login('bob');
-      assert.calledOnce(ref.authWithCustomToken);
-      assert.calledWithExactly(ref.authWithCustomToken, 'some-token', match.func);
-    });
-
-    it('should resolve the promise with the auth data', done => {
-      const promise = suite.login('bob');
-      const cb = ref.authWithCustomToken.lastCall.args[1];
-      const authData = {};
-
-      cb(null, authData);
-      promise.then(
-        results => expect(results).to.be(authData)
-      ).then(
-        () => done(),
-        done
-      );
-    });
-
-    it('should resolve the promise in a rejected state if auth failed', done => {
-      const promise = suite.login('bob');
-      const cb = ref.authWithCustomToken.lastCall.args[1];
-      const err = new Error();
-
-      cb(err);
-      promise.then(
-        () => done(new Error('Should not be fulfilled')),
-        e => expect(e).to.be(err)
-      ).then(
-        () => done(),
-        done
-      );
+    it('should have no current user', function() {
+      expect(suite.rest().currentUser.token).to.be(undefined);
     });
 
   });
 
-  describe('logAsAdmin', () => {
-    let suite, ref;
+  describe('socket', function() {
+    let suite;
 
-    beforeEach(() => {
-      suite = testSuite({
+    beforeEach(function() {
+      suite = testSuite.factory({
         firebaseId: 'some-id',
         firebaseSecret: 'xxx'
       });
-
-      ref = {authWithCustomToken: spy()};
-      suite.ref = stub().returns(ref);
-      suite.generator = {createToken: stub().returns('some-token')};
     });
 
-    it('should generate an admin token', () => {
-      suite.logAsAdmin();
-      assert.calledOnce(suite.generator.createToken);
-      assert.calledWithExactly(
-        suite.generator.createToken,
-        match.object,
-        match({admin: true})
-      );
+    it('should return a SocketContext', function() {
+      expect(suite.socket()).to.be.a(testSuite.SocketContext);
     });
 
-    it('should return a promise', () => {
-      expect(suite.logAsAdmin().then).to.be.ok();
+    it('should reference the test suite', function() {
+      expect(suite.socket().suite).to.be(suite);
     });
 
-    it('should query a Firebase reference for firebase db', () => {
-      suite.logAsAdmin();
-      assert.calledOnce(suite.ref);
-      assert.calledWithExactly(suite.ref);
-    });
-
-    it('should authenticate the user with the admin token', () => {
-      suite.logAsAdmin();
-      assert.calledOnce(ref.authWithCustomToken);
-      assert.calledWithExactly(ref.authWithCustomToken, 'some-token', match.func);
-    });
-
-    it('should resolve the promise when user is authenticated as admin', done => {
-      const promise = suite.logAsAdmin();
-      const cb = ref.authWithCustomToken.lastCall.args[1];
-      const authData = {};
-
-      cb(null, authData);
-      promise.then(
-        results => expect(results).to.be(authData)
-      ).then(
-        () => done(),
-        done
-      );
-    });
-
-    it('should resolve the promise in a rejected state if auth failed', done => {
-      const promise = suite.logAsAdmin();
-      const cb = ref.authWithCustomToken.lastCall.args[1];
-      const err = new Error();
-
-      cb(err);
-      promise.then(
-        () => done(new Error('Should not be fulfilled')),
-        e => expect(e).to.be(err)
-      ).then(
-        () => done(),
-        done
-      );
+    it('should have no current user', function() {
+      expect(suite.socket().currentUser.token).to.be(undefined);
     });
 
   });
 
-  describe('logout', () => {
-    let suite, ref;
+  describe('startWith', () => {
+    let suite, ctx;
 
     beforeEach(() => {
-      suite = testSuite({
+      suite = testSuite.factory({
         firebaseId: 'some-id',
         firebaseSecret: 'xxx'
       });
-
-      ref = {unauth: spy()};
-      suite.ref = stub().returns(ref);
+      ctx = {startWith: sinon.stub().returnsThis()};
+      sinon.stub(suite, 'socket').returns(ctx);
     });
 
-    it('should query a Firebase reference for firebase db', () => {
-      suite.logout();
-      assert.calledOnce(suite.ref);
-      assert.calledWithExactly(suite.ref);
+    it('should return a SocketContext object', () => {
+      expect(suite.startWith()).to.be(ctx);
     });
 
-    it('should un-authenticate the user', () => {
-      suite.logout();
-      assert.calledOnce(ref.unauth);
+    it('should setup the db', function() {
+      const data = {};
+
+      suite.startWith(data);
+      sinon.assert.calledOnce(ctx.startWith);
+      sinon.assert.calledWithExactly(ctx.startWith, data);
     });
 
-  });
-
-  describe('with', () => {
-    let suite, ref, login;
-
-    beforeEach(() => {
-      suite = testSuite({
-        firebaseId: 'some-id',
-        firebaseSecret: 'xxx'
-      });
-
-      ref = {set: spy()};
-      suite.ref = stub().returns(ref);
-      suite.logAsAdmin = stub().returns(new Promise(resolve => login = resolve));
-      suite.logout = spy();
-    });
-
-    it('should return a Context object', () => {
-      expect(suite.with()).to.be.an(Context);
-    });
-
-    it('should login as admin', () => {
-      suite.with();
-      assert.calledOnce(suite.logAsAdmin);
-    });
-
-    it('should set initial state once logged in', done => {
-      const init = {};
-      suite.with(init);
-      assert.notCalled(suite.ref);
-
-      login({});
-      wait().then(() => {
-        assert.calledOnce(suite.ref);
-        assert.calledWithExactly(suite.ref);
-
-        assert.calledOnce(ref.set);
-        assert.calledWithExactly(ref.set, init, match.func);
-      }).then(
-        () => done(),
-        done
-      );
-    });
-
-    it('should logout once the initial state is set', done => {
-      const init = {};
-      suite.with(init);
-      assert.notCalled(suite.ref);
-
-      login({});
-      wait().then(() => {
-        const setCallback = ref.set.lastCall.args[1];
-
-        assert.notCalled(suite.logout);
-        setCallback(null);
-        return wait();
-      }).then(
-        () => assert.calledOnce(suite.logout)
-      ).then(
-        () => done(),
-        done
-      );
-    });
-
-    it('should resolve returned promise once the admin is logged out', done => {
-      suite.with({}).then(
-        () => assert.calledOnce(suite.logout)
-      ).then(
-        () => done(),
-        done
-      );
-
-      login({});
-      wait().then(() => {
-        const setCallback = ref.set.lastCall.args[1];
-        setCallback(null);
-      });
-    });
   });
 
 });
