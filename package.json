@@ -5,9 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "cover": "istanbul cover ./node_modules/mocha/bin/_mocha tests/index.js --report lcov -- -R spec",
-    "coveralls": "npm run cover && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "lint": "eslint src/ tests/",
-    "test": "eslint src/ tests/ && mocha tests/index.js"
+    "coveralls": "istanbul cover ./node_modules/mocha/bin/_mocha tests/index.js --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "lint": "jscs . && eslint src/ tests/",
+    "lint-fix": "jscs . --fix",
+    "test": "mocha -b tests/index.js"
   },
   "repository": {
     "type": "git",
@@ -26,17 +27,21 @@
   "engines": {
     "node": ">=4.0.0"
   },
-  "peerDependencies": {
-    "firebase": "2.x",
-    "firebase-token-generator": "2.x"
+  "dependencies": {
+    "firebase-token-generator": "^2.0.0",
+    "rest-firebase": "^0.2.0",
+    "rx-firebase": "^0.1.0"
   },
   "devDependencies": {
-    "coveralls": "^2.11.4",
-    "eslint": "^1.10.2",
+    "babel-eslint": "^5.0.0-beta8",
+    "coveralls": "^2.11.6",
+    "eslint": "^1.10.3",
     "expect.js": "^0.3.1",
-    "istanbul": "^0.4.1",
-    "mocha": "^2.3.4",
+    "firebase-test": "^0.1.0",
+    "istanbul": "^0.4.2",
+    "jscs": "^2.9.0",
+    "mocha": "^2.4.5",
     "mocha-lcov-reporter": "^1.0.0",
-    "sinon": "^1.17.2"
+    "sinon": "^1.17.3"
   }
 }
