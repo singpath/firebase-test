@@ -29,8 +29,8 @@ exports.Context = class Context {
   with(opts) {
     return new this.constructor(
       this.suite,
-      opts && opts.chain || this.chain,
-      opts && opts.currentUser || this.currentUser
+      (opts && opts.chain) || this.chain,
+      (opts && opts.currentUser) || this.currentUser
     );
   }
 
@@ -125,10 +125,6 @@ exports.Context = class Context {
 
 exports.RestContext = class RestContext extends exports.Context {
 
-  constructor(suite, chain, currentUser) {
-    super(suite, chain, currentUser);
-  }
-
   firebase(paths) {
     const auth = this.currentUser && this.currentUser.token;
 
@@ -141,10 +137,6 @@ exports.RestContext = class RestContext extends exports.Context {
 };
 
 exports.SocketContext = class SocketContext extends exports.Context {
-
-  constructor(suite, chain, currentUser) {
-    super(suite, chain, currentUser);
-  }
 
   firebase(paths) {
     return this.suite.ref({paths});
@@ -270,5 +262,6 @@ exports.Suite = class Suite {
  *
  * @param  {Object} opts  TestSuite options; must include `firebaseId` and
  *                        `firebaseSecret` fields.
+ * @return {Suite}
  */
 exports.factory = opts => new exports.Suite(opts);

@@ -1,7 +1,5 @@
 'use strict';
 
-const expect = require('expect.js');
-const sinon = require('sinon');
 const assert = sinon.assert;
 const match = sinon.match;
 const stub = sinon.stub;
@@ -16,13 +14,13 @@ describe('Context', function() {
   });
 
   it('should not implement firebase', function() {
-    expect(() => ctx.firebase({paths: '/foo'})).to.throwError();
+    expect(() => ctx.firebase({paths: '/foo'})).to.throw();
   });
 
   it('should not implement get', function() {
     return ctx.get('/foo').then(
       () => Promise.reject(new Error('unexpected')),
-      err => expect(err.message).to.be('not implemented')
+      err => expect(err.message).to.equal('not implemented')
     );
   });
 
@@ -44,6 +42,7 @@ describe('Context', function() {
 
     it('should then set the seed', function() {
       const data = {};
+
       return ctx.startWith(data).then(() => {
         sinon.assert.calledOnce(ctx.set);
         sinon.assert.calledWith(ctx.set, '/', data);
@@ -69,34 +68,34 @@ describe('Context', function() {
     it('should create a copy of the context', function() {
       const newCtx = ctx.with();
 
-      expect(newCtx).not.to.be(ctx);
-      expect(newCtx.chain).to.be(ctx.chain);
-      expect(newCtx.suite).to.be(ctx.suite);
-      expect(newCtx.currentUser).to.be(ctx.currentUser);
+      expect(newCtx).not.to.equal(ctx);
+      expect(newCtx.chain).to.equal(ctx.chain);
+      expect(newCtx.suite).to.equal(ctx.suite);
+      expect(newCtx.currentUser).to.equal(ctx.currentUser);
     });
 
     it('should allow update the current user', function() {
       const currentUser = {};
       const newCtx = ctx.with({currentUser});
 
-      expect(newCtx.currentUser).to.be(currentUser);
-      expect(newCtx.currentUser).not.to.be(ctx.currentUser);
+      expect(newCtx.currentUser).to.equal(currentUser);
+      expect(newCtx.currentUser).not.to.equal(ctx.currentUser);
     });
 
     it('should allow update the chain', function() {
       const chain = Promise.resolve();
       const newCtx = ctx.with({chain});
 
-      expect(newCtx.chain).to.be(chain);
-      expect(newCtx.chain).not.to.be(ctx.chain);
+      expect(newCtx.chain).to.equal(chain);
+      expect(newCtx.chain).not.to.equal(ctx.chain);
     });
 
     it('should not update the suite', function() {
       const suite = {};
       const newCtx = ctx.with({suite});
 
-      expect(newCtx.suite).not.to.be(suite);
-      expect(newCtx.suite).to.be(ctx.suite);
+      expect(newCtx.suite).not.to.equal(suite);
+      expect(newCtx.suite).to.equal(ctx.suite);
     });
 
   });
@@ -116,13 +115,13 @@ describe('Context', function() {
     it('should chain cbs', function() {
       start();
 
-      ctx.then(() => {
-        return 1;
-      }).then(e => {
-        expect(e.prev).to.be(1);
+      ctx.then(
+        () => 1
+      ).then(e => {
+        expect(e.prev).to.equal(1);
         return 2;
       }).then(e => {
-        expect(e.prev).to.be(2);
+        expect(e.prev).to.equal(2);
       });
     });
 
@@ -184,7 +183,7 @@ describe('Context', function() {
 
       return new testSuite.Context({}, Promise.reject(err)).ok().then(
         () => Promise.reject(new Error('unexpected')),
-        e => expect(e).to.be(err)
+        e => expect(e).to.equal(err)
       );
     });
 
@@ -263,9 +262,9 @@ describe('Context', function() {
       const debug = true;
       const newCtx = ctx.as(uid, data, debug);
 
-      expect(newCtx).not.to.be(ctx);
+      expect(newCtx).not.to.equal(ctx);
 
-      return newCtx.then(e => expect(e.ctx).to.be(newCtx));
+      return newCtx.then(e => expect(e.ctx).to.equal(newCtx));
     });
 
     it('should reset the current user if no uid is given', function() {
@@ -291,7 +290,7 @@ describe('Context', function() {
       const debug = true;
 
       return ctx.as(uid, data, debug).then(e => {
-        expect(e.ctx.currentUser.token).to.be(token);
+        expect(e.ctx.currentUser.token).to.equal(token);
       });
     });
 
@@ -300,7 +299,7 @@ describe('Context', function() {
       const data = {isModerator: true};
 
       return ctx.as(uid, data).then(e => {
-        expect(e.ctx.currentUser.token).to.be(token);
+        expect(e.ctx.currentUser.token).to.equal(token);
         assert.calledOnce(suite.token);
         assert.calledWith(suite.token, uid, data, match(v => !v || !v.debug));
       });
@@ -319,9 +318,9 @@ describe('Context', function() {
     it('should copy the ctx', function() {
       const newCtx = ctx.asAdmin();
 
-      expect(newCtx).not.to.be(ctx);
+      expect(newCtx).not.to.equal(ctx);
 
-      return newCtx.then(e => expect(e.ctx).to.be(newCtx));
+      return newCtx.then(e => expect(e.ctx).to.equal(newCtx));
     });
 
     it('should create an admin token', function() {
@@ -335,7 +334,7 @@ describe('Context', function() {
 
     it('should switch the current user', function() {
       return ctx.asAdmin().then(e => {
-        expect(e.ctx.currentUser.token).to.be(token);
+        expect(e.ctx.currentUser.token).to.equal(token);
       });
     });
 
@@ -351,9 +350,9 @@ describe('Context', function() {
     it('should copy the ctx', function() {
       const newCtx = ctx.asGuest();
 
-      expect(newCtx).not.to.be(ctx);
+      expect(newCtx).not.to.equal(ctx);
 
-      return newCtx.then(e => expect(e.ctx).to.be(newCtx));
+      return newCtx.then(e => expect(e.ctx).to.equal(newCtx));
     });
 
     it('should reset the current user', function() {
@@ -382,7 +381,7 @@ describe('RestContext', function() {
 
       req.withArgs(sinon.match({paths})).returns(expected);
 
-      expect(ctx.firebase(paths)).to.be(expected);
+      expect(ctx.firebase(paths)).to.equal(expected);
     });
 
     it('should create REST Firebase reference with the auth token', function() {
@@ -393,7 +392,7 @@ describe('RestContext', function() {
       ctx.currentUser.token = auth;
       req.withArgs(sinon.match({paths, auth})).returns(expected);
 
-      expect(ctx.firebase(paths)).to.be(expected);
+      expect(ctx.firebase(paths)).to.equal(expected);
     });
 
   });
@@ -413,7 +412,7 @@ describe('RestContext', function() {
 
       ctx.firebase.withArgs(paths).returns(ref);
 
-      return ctx.get(paths).then(e => expect(e.prev).to.be(resp));
+      return ctx.get(paths).then(e => expect(e.prev).to.equal(resp));
     });
   });
 
@@ -437,7 +436,7 @@ describe('SocketContext', () => {
 
       ref.withArgs(sinon.match({paths})).returns(expected);
 
-      expect(ctx.firebase(paths)).to.be(expected);
+      expect(ctx.firebase(paths)).to.equal(expected);
     });
 
   });
@@ -461,7 +460,7 @@ describe('SocketContext', () => {
       suite.ref = sinon.stub().returns({authWithCustomToken});
 
       return ctx.as(uid, data, debug).then(e => {
-        expect(e.ctx.currentUser.token).to.be(token);
+        expect(e.ctx.currentUser.token).to.equal(token);
         assert.calledOnce(authWithCustomToken);
         assert.calledWith(authWithCustomToken, token);
       });
@@ -469,6 +468,7 @@ describe('SocketContext', () => {
 
     it('should log user off if uid is missing', function() {
       const unauth = sinon.spy();
+
       suite.ref = sinon.stub().returns({unauth});
 
       return ctx.as().then(e => {
@@ -494,7 +494,7 @@ describe('SocketContext', () => {
       suite.ref = sinon.stub().returns({authWithCustomToken});
 
       return ctx.asAdmin().then(e => {
-        expect(e.ctx.currentUser.token).to.be(token);
+        expect(e.ctx.currentUser.token).to.equal(token);
         assert.calledOnce(authWithCustomToken);
         assert.calledWith(authWithCustomToken, token);
       });
@@ -511,6 +511,7 @@ describe('SocketContext', () => {
 
     it('should log user off', function() {
       const unauth = sinon.spy();
+
       suite.ref = sinon.stub().returns({unauth});
 
       return ctx.asGuest().then(e => {
@@ -551,7 +552,7 @@ describe('SocketContext', () => {
       return ctx.get(paths).then(e => {
         assert.calledOnce(ref.once);
         assert.calledWithExactly(ref.once, 'value');
-        expect(e.prev).to.be(snapshot);
+        expect(e.prev).to.equal(snapshot);
       });
     });
 

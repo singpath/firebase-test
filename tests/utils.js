@@ -1,8 +1,9 @@
 'use strict';
 
-exports.wait = function wait(delay) {
+exports.wait = function(delay) {
   delay = delay || 0;
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), delay);
-  });
+
+  return new Promise(
+    resolve => setTimeout(resolve, delay)
+  );
 };

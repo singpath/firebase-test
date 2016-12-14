@@ -1,8 +1,7 @@
 'use strict';
 
-const expect = require('expect.js');
-const sinon = require('sinon');
 const FirebaseTokenGenerator = require('firebase-token-generator');
+
 const assert = sinon.assert;
 const match = sinon.match;
 const stub = sinon.stub;
@@ -28,7 +27,7 @@ describe('Suite', function() {
       testSuite.factory({
         firebaseSecret: 'xxx'
       });
-    }).to.throwError();
+    }).to.throw();
   });
 
   it('should throw if the firebase secret is missing', function() {
@@ -36,7 +35,7 @@ describe('Suite', function() {
       testSuite.factory({
         firebaseId: 'some-id'
       });
-    }).to.throwError();
+    }).to.throw();
   });
 
   it('should instantiate a token generator', function() {
@@ -45,8 +44,8 @@ describe('Suite', function() {
       firebaseSecret: 'xxx'
     });
 
-    expect(suite.generator).to.be.an(FirebaseTokenGenerator);
-    expect(suite.generator.mSecret).to.be('xxx');
+    expect(suite.generator).to.be.an.instanceof(FirebaseTokenGenerator);
+    expect(suite.generator.mSecret).to.equal('xxx');
   });
 
   it('should set rxFirebase', function() {
@@ -60,7 +59,7 @@ describe('Suite', function() {
       firebaseSecret: 'xxx'
     });
 
-    expect(suite.rxFirebase).to.be(factory);
+    expect(suite.rxFirebase).to.equal(factory);
   });
 
   it('should set restFirebase', function() {
@@ -74,7 +73,7 @@ describe('Suite', function() {
       firebaseSecret: 'xxx'
     });
 
-    expect(suite.restFirebase).to.be(factory);
+    expect(suite.restFirebase).to.equal(factory);
   });
 
   describe('req', function() {
@@ -94,7 +93,7 @@ describe('Suite', function() {
       const ref = {};
 
       suite.restFirebase.withArgs(opts).returns(ref);
-      expect(suite.req(opts)).to.be(ref);
+      expect(suite.req(opts)).to.equal(ref);
     });
 
     it('should reference the db root by default', function() {
@@ -104,7 +103,7 @@ describe('Suite', function() {
         sinon.match(v => !v || !v.paths || v.paths === '/')
       ).returns(ref);
 
-      expect(suite.req()).to.be(ref);
+      expect(suite.req()).to.equal(ref);
     });
   });
 
@@ -125,7 +124,7 @@ describe('Suite', function() {
       const ref = {};
 
       suite.rxFirebase.withArgs(opts.paths).returns(ref);
-      expect(suite.ref(opts)).to.be(ref);
+      expect(suite.ref(opts)).to.equal(ref);
     });
 
     it('should reference the db root by default', function() {
@@ -135,7 +134,7 @@ describe('Suite', function() {
         sinon.match(v => !v || !v.paths || v.paths === '/')
       ).returns(ref);
 
-      expect(suite.ref()).to.be(ref);
+      expect(suite.ref()).to.equal(ref);
     });
   });
 
@@ -156,7 +155,7 @@ describe('Suite', function() {
     });
 
     it('should generate a new token for the user id', function() {
-      expect(suite.token('bob').token).to.be(token);
+      expect(suite.token('bob').token).to.equal(token);
       assert.calledOnce(suite.generator.createToken);
       assert.calledWithExactly(
         suite.generator.createToken,
@@ -178,7 +177,7 @@ describe('Suite', function() {
     });
 
     it('should allow auth data to be set', function() {
-      suite.token('bob', {'isModerator': true, displayName: 'Bob'});
+      suite.token('bob', {isModerator: true, displayName: 'Bob'});
       assert.calledWithExactly(
         suite.generator.createToken,
         match({
@@ -232,15 +231,15 @@ describe('Suite', function() {
     });
 
     it('should return a RestContext', function() {
-      expect(suite.rest()).to.be.a(testSuite.RestContext);
+      expect(suite.rest()).to.be.an.instanceof(testSuite.RestContext);
     });
 
     it('should reference the test suite', function() {
-      expect(suite.rest().suite).to.be(suite);
+      expect(suite.rest().suite).to.equal(suite);
     });
 
     it('should have no current user', function() {
-      expect(suite.rest().currentUser.token).to.be(undefined);
+      expect(suite.rest().currentUser.token).to.equal(undefined);
     });
 
   });
@@ -256,15 +255,15 @@ describe('Suite', function() {
     });
 
     it('should return a SocketContext', function() {
-      expect(suite.socket()).to.be.a(testSuite.SocketContext);
+      expect(suite.socket()).to.be.an.instanceof(testSuite.SocketContext);
     });
 
     it('should reference the test suite', function() {
-      expect(suite.socket().suite).to.be(suite);
+      expect(suite.socket().suite).to.equal(suite);
     });
 
     it('should have no current user', function() {
-      expect(suite.socket().currentUser.token).to.be(undefined);
+      expect(suite.socket().currentUser.token).to.equal(undefined);
     });
 
   });
@@ -282,7 +281,7 @@ describe('Suite', function() {
     });
 
     it('should return a SocketContext object', () => {
-      expect(suite.startWith()).to.be(ctx);
+      expect(suite.startWith()).to.equal(ctx);
     });
 
     it('should setup the db', function() {
