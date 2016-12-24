@@ -11,5 +11,9 @@ chai.use(dirtyChai);
 global.expect = chai.expect;
 global.sinon = sinon;
 
-require('./test_context');
-require('./test_testsuite');
+require('./main');
+require('./context');
+require('./env');
+require('./path');
+require('./promise');
+require('./drivers');
