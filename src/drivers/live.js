@@ -59,7 +59,7 @@ class LiveDriver {
 
     const adminToken = tokens.get(adminAuth, {admin: true});
     const setup = Promise.all([
-      this.client.rules({rules, secret: this.secret}),
+      deployRules({rules, client: this.client, secret: this.secret}),
       this.client.set({paths: '', payload: seed, auth: adminToken, silent: true})
     ]);
 
@@ -165,3 +165,49 @@ exports.tokenGenerator = function({secret, tokenGenerator}) {
 
   return new FirebaseTokenGenerator(secret);
 };
+
+/**
+ * Rules deployment cache.
+ *
+ * @type {Map<string,Promise<string>>}
+ */
+const rulesRequests = new Map();
+
+/**
+ * Reset rules deployment cache.
+ */
+exports.reset = function() {
+  rulesRequests.clear();
+};
+
+/**
+ * Deploy rules for a database project.
+ *
+ * It deploy the rules only if the previous deployed rules were different.
+ *
+ * @param  {object}     options          Request options
+ * @param  {RestClient} options.client   Client
+ * @param  {object}     options.rules    Rules to deploy
+ * @param  {string}     options.secret   Secret to authenticate the request
+ * @return {Promise<void,Error>}
+ */
+function deployRules({client, rules, secret}) {
+  const lastRequest = rulesRequests.get(client.projectId);
+
+  return Promise.resolve(lastRequest).then(oldRulesHash => {
+    const newRuleHash = hash(rules);
+
+    if (oldRulesHash === newRuleHash) {
+      return oldRulesHash;
+    }
+
+    const request = client.rules({rules, secret});
+
+    rulesRequests.set(client.projectId, request.then(
+      () => newRuleHash,
+      () => oldRulesHash
+    ));
+
+    return request;
+  });
+}

@@ -639,6 +639,10 @@ describe('live', function() {
 
   describe('create', function() {
 
+    beforeEach(function() {
+      live.reset();
+    });
+
     it('should create a firebase-test driver', function() {
       const secret = 'xxxx';
       const projectId = 'foo';
@@ -845,6 +849,31 @@ describe('live', function() {
         return driver.exec({rules, seed, ops}).then(
           () => Promise.reject('unexpected'),
           () => {}
+        );
+      });
+
+      it('should skip deploying the same rule set', function() {
+        const rules = {};
+        const ctx = context.create({rules, driver});
+        const exec = () => driver.exec(ctx);
+
+        return exec().then(exec).then(
+          () => expect(client.rules).to.have.been.calledOnce()
+        );
+      });
+
+      it('should no skip deploying the same rule set after error', function() {
+        const rules = {};
+        const ctx = context.create({rules, driver});
+        const exec = () => driver.exec(ctx).then(
+          () => Promise.reject(new Error('unexpected')),
+          () => {}
+        );
+
+        client.rules.returns(Promise.reject(new Error()));
+
+        return exec().then(exec).then(
+          () => expect(client.rules).to.have.been.calledTwice()
         );
       });
 
