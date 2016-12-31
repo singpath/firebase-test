@@ -53,7 +53,7 @@ describe('presence', function() {
 });
 ```
 
-Firebase test is framework agnostic and will work with framework support
+Firebase test is framework agnostic and will work with any framework supporting
 callback or promise based async assertions:
 
 ```js
@@ -66,8 +66,8 @@ it('should be readeable (using a promise)', function() {
 });
 ```
 
-By default the operations are simulated (using [targaryen]). You switch to live
-test by providing a Firebase project ID and a Firebase secret, and setting
+By default the operations are simulated (using [targaryen]). You can switch to
+live test by providing a Firebase project ID and a Firebase secret, and setting
 an alternative driver:
 
 ```shell
