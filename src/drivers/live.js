@@ -15,6 +15,8 @@ const log = require('debug')('firebase-test:context:rest');
 // admin auth data
 const adminAuth = {uid: 'DB Admin'};
 
+const noop = () => {};
+
 /**
  * Rest driver.
  *
@@ -48,12 +50,22 @@ class LiveDriver {
   init() {}
 
   /**
-   * Test the operation can be applied.
+   * Enqueue testing the operation can be applied.
    *
    * @param  {Context} ctx Context holding rules, initial datas and the operations to test
    * @return {Promise<void,Error>}
    */
   exec(ctx) {
+    return lock(this.client, () => this.runOps(ctx));
+  }
+
+  /**
+   * Test the operation can be applied.
+   *
+   * @param  {Context} ctx Context holding rules, initial datas and the operations to test
+   * @return {Promise<void,Error>}
+   */
+  runOps(ctx) {
     const {ops, seed, rules} = ctx;
     const tokens = new Tokens(this.generator);
 
@@ -174,10 +186,22 @@ exports.tokenGenerator = function({secret, tokenGenerator}) {
 const rulesRequests = new Map();
 
 /**
- * Reset rules deployment cache.
+ * Sequence chains - used synchronize sequence execution.
+ *
+ * One sequence shouldn't run while an other (targeting the same project) does.
+ *
+ * @type {Map<string,Promise<void>>}
+ */
+const sequences = new Map();
+
+/**
+ * Reset rules deployment cache and sequence chain.
+ *
+ * Only useful for tests.
  */
 exports.reset = function() {
   rulesRequests.clear();
+  sequences.clear();
 };
 
 /**
@@ -209,5 +233,24 @@ function deployRules({client, rules, secret}) {
     ));
 
     return request;
+  });
+}
+
+/**
+ * Run a sequence once the previous sequence for that project id ends.
+ *
+ * @param  {{projectId: string}}             client   Rest client
+ * @param  {function(): Promise<void,Error>} sequence Sequence to run
+ * @return {Promise<void,Error>}
+ */
+function lock(client, sequence) {
+  const lastSequence = sequences.get(client.projectId);
+
+  return Promise.resolve(lastSequence).then(() => {
+    const result = sequence();
+
+    sequences.set(client.projectId, result.then(noop, noop));
+
+    return result;
   });
 }
