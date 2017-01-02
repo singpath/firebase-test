@@ -9,7 +9,9 @@
     "lint": "eslint src/ tests/",
     "format": "npm run lint -- --fix",
     "test": "mocha -b tests/index.js",
-    "test:inspect": "node --inspect --debug-brk node_modules/.bin/_mocha -b tests/index.js"
+    "test:inspect": "node --inspect --debug-brk node_modules/.bin/_mocha -b tests/index.js",
+    "test:example": "mocha exemples/firechat/tests.js",
+    "test:example:live": "FIREBASE_TEST_DRIVER_ID=live mocha exemples/firechat/tests.js"
   },
   "repository": {
     "type": "git",
