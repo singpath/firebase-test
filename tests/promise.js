@@ -215,11 +215,9 @@ describe('promise', function() {
         q.thenable(ok)
       ).then(
         () => Promise.reject(new Error('unexpected')),
-        es => {
+        () => {
           expect(ok).to.have.callCount(2);
           expect(fail).to.have.callCount(2);
-          expect(es[0]).to.equal(err1);
-          expect(es[1]).to.equal(err2);
         }
       );
     });
