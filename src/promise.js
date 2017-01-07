@@ -2,6 +2,17 @@
 
 const once = require('lodash.once');
 
+class MultipleError extends Error {
+
+  constructor(errors = []) {
+    const msg = errors.map(e => e.stack).join('/n/n');
+
+    super(msg);
+
+    this.errors = errors;
+  }
+}
+
 /**
  * Create a promise like object.
  *
@@ -76,7 +87,7 @@ exports.run = function(...thenables) {
  *   );
  *
  * @param  {...Promise<void,Error>} thenables Thenables returned by Context#ok or Context#shouldFail
- * @return {Promise<void,Array<Error>>}
+ * @return {Promise<void,Error>}
  */
 exports.all = function(...thenables) {
   return [].concat(...thenables).reduce(
@@ -90,6 +101,6 @@ exports.all = function(...thenables) {
       return;
     }
 
-    return Promise.reject(failures);
+    return Promise.reject(new MultipleError(failures));
   });
 };
