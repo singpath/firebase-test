@@ -33,7 +33,7 @@
     "lodash.camelcase": "^4.3.0",
     "lodash.once": "^4.1.1",
     "object-hash": "^1.1.5",
-    "targaryen": "^3.0.0-rc.2"
+    "targaryen": "^3.0.0-rc.5"
   },
   "devDependencies": {
     "body": "^5.1.0",

@@ -75,7 +75,7 @@ class SimulatedDriver {
     const finalDb = ops.reduce(
       (database, operation) => {
         const {op, path = '/', value, auth = null, options: {debug = false} = {}} = operation;
-        const db = database.as(auth);
+        const db = database.as(auth).with({debug});
         let result, childPath;
 
         switch (op) {
