@@ -6,3 +6,5 @@ script:
   - npm run lint
   - npm test
   - npm run coveralls
+  - npm run test:example
+  - npm run test:example:live
